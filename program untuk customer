@@ -1,0 +1,512 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#define namafile "/Users/syauqimuhammad/Documents/KULIAH/MenuFix.txt"
+#define GARISLURUS "========================================================"
+
+struct item{
+    char kode[30];
+    //urutan
+    char nama[30];
+    int harga;
+    int rekapHarga;
+    int jenis;
+    //0 = makanan, 1 = minuman
+    int halal;
+    //0 = nonhalal, 1 = halal
+    int count;
+};
+
+struct nodeitem {
+  struct item item;
+  struct nodeitem * next;
+};
+
+void swapchar(char string1[], char string2[]);
+void swapint(int *a, int *b);
+void sort(struct nodeitem *head, int size, int ascdesc);
+void swapeverything(struct nodeitem * head);
+int search( int jumlah, struct nodeitem * head);
+    
+void additem(struct nodeitem** head, struct item item, int *jumlahitem);
+void countItems(int * jumlah);
+void transferdata(struct nodeitem ** head, int jumlah);
+void printtofile (struct item baru);
+    
+void filterHalal(struct nodeitem* head, int halal[]);
+void filterHarga(struct nodeitem* head, int harga[], int hargamax);
+void showMenu(struct nodeitem* head, int jumlah, int pilihan2, int pilihan3, int pilihan4, int pilihan5, int hargamax);
+void printRekap(struct nodeitem * head);
+void rekapBarang(struct nodeitem* head, int jumlah);
+
+void additem(struct nodeitem** head, struct item item, int *jumlahitem){
+    
+    struct nodeitem *ptr, *temp;
+    ptr = *head;
+    temp = malloc(sizeof(struct nodeitem));
+
+  strcpy(temp->item.nama, item.nama);
+  strcpy(temp->item.kode, item.kode);
+  temp->item.harga = item.harga;
+  temp->item.jenis = item.jenis;
+  temp->item.halal = item.halal;
+  temp->next = NULL;
+    
+    if (ptr == NULL){
+      *head = temp;
+    
+    } else {
+      while (ptr->next != NULL){
+      ptr = ptr->next;
+      }
+      ptr->next = temp;
+  }
+}
+
+
+void countItems(int * jumlah){
+    FILE* fptr;
+    char tempc;
+    
+    fptr = fopen(namafile, "r");
+    
+    if (fptr == NULL){
+        printf("No menu file!");
+        return;
+    }
+    
+    while( (tempc = fgetc(fptr)) != EOF){
+        if (tempc == '\n')
+            (*jumlah)++;
+    }
+    fclose(fptr);
+    *jumlah /= 2;
+}
+
+void transferdata(struct nodeitem ** head, int jumlah){
+    FILE* fptr;
+    int i;
+   
+    //mendeklarasikan item temporary
+    struct item temp;
+    
+    //membuka file untuk diread
+    fptr = fopen(namafile, "r");
+    if (fptr == NULL){
+        printf("Error!");
+        return;
+    }
+    
+        for (i = 0; i < jumlah; i++){
+            if (!feof(fptr) && !ferror(fptr)){
+                fscanf(fptr, " %[^\n]s", temp.nama);
+                fscanf(fptr, "%s %d %d %d", temp.kode, &temp.harga, &temp.jenis, &temp.halal);
+                //menambahkan item yang baru dibaca pada temporary struct ke dalam linkedlist
+                additem(head, temp, &jumlah);
+            }
+        }
+    
+    //menutup file
+    fclose(fptr);
+}
+
+void swapchar(char string1[], char string2[]){
+    char temp[50];
+    
+    strcpy(temp, string1);
+    strcpy(string1, string2);
+    strcpy(string2, temp);
+}
+
+void swapint(int *a, int *b){
+    int temp = *a;
+    *a = *b;
+    *b = temp;
+}
+
+void sort(struct nodeitem * head, int size, int ascdesc){
+    struct nodeitem * temp1 = head;
+    struct nodeitem * temp2 = head;
+    
+    while (temp1 != NULL) {
+        while (temp2->next != NULL){
+            if (ascdesc == 1){
+                if (temp2->item.harga > temp2->next->item.harga){
+                    swapint(&temp2->item.harga, &temp2->next->item.harga);
+                    swapint(&temp2->item.halal, &temp2->next->item.halal);
+                    swapint(&temp2->item.jenis, &temp2->next->item.jenis);
+                    swapchar(temp2->item.nama, temp2->next->item.nama);
+                    swapchar(temp2->item.kode, temp2->next->item.kode);
+                }
+            } else {
+                if (temp2->item.harga < temp2->next->item.harga){
+                    swapint(&temp2->item.harga, &temp2->next->item.harga);
+                    swapint(&temp2->item.halal, &temp2->next->item.halal);
+                    swapint(&temp2->item.jenis, &temp2->next->item.jenis);
+                    swapchar(temp2->item.nama, temp2->next->item.nama);
+                    swapchar(temp2->item.kode, temp2->next->item.kode);
+                }
+            }
+            temp2 = temp2->next;
+        }
+        temp2 = head;
+        temp1 = temp1->next;
+    }
+}
+
+
+int search( int jumlah, struct nodeitem * head){
+    int found = 0;
+    char keyword[30];
+    char beli[30];
+    int valid;
+    int qty;
+    
+    struct nodeitem * temp = head;
+    while (temp != NULL){
+        temp->item.count = 0;
+        temp = temp->next;
+    }
+    
+    do {
+        printf("\nMasukkan keyword yang ingin dicari (ketik 'done' untuk selesai)");
+        printf("\n\n>>> ");
+        scanf("%s", keyword);
+        
+        if (strcmp(keyword, "done") == 0)
+            break;
+        
+        printf("\n%-7s| %-30s| Harga", "Kode", "Nama");
+        printf("\n----------------------------------------------");
+        
+        temp = head;
+        while (temp != NULL){
+            if(strcasestr(temp->item.nama, keyword)){
+                printf("\n%-7s| %-30s| %d", temp->item.kode, temp->item.nama, temp->item.harga);
+                found = 1;
+            }
+            temp = temp->next;
+        }
+        
+        if(found == 0){
+            printf("\nMenu tidak tersedia");}
+        else if (found == 1){
+            printf("\n\nTuliskan kode item yang ingin dipesan beserta jumlah: ");
+            printf("\nContoh: MGR 2\n\n>>> ");
+            scanf("%s %d", beli, &qty);
+            
+            temp = head;
+            while (temp != NULL) {
+                if (strcasestr(beli, temp->item.kode)){
+                   temp->item.count += qty;
+                    valid = 1;
+                }
+                temp = temp->next;
+            }
+            
+            if (valid != 1)
+                printf("Bukan merupakan kode menu yang valid!\n");
+        }
+    } while (1 != 0);
+    
+    temp = head;
+    while (temp != NULL){
+        temp->item.rekapHarga = temp->item.harga * temp->item.count;
+        temp = temp->next;
+    }
+    
+    printRekap(head);
+    
+    return 0;
+}
+
+
+void filterHalal(struct nodeitem* head, int halal[]){
+    int i;
+    struct nodeitem * temp = head;
+    
+    i = 0;
+    while (temp != NULL){
+        if (temp->item.halal == 1){
+            halal[i] = 1;
+        }
+        i++;
+        temp = temp->next;
+    }
+}
+
+
+void filterHarga(struct nodeitem* head, int harga[], int hargamax){
+    int i;
+    struct nodeitem * temp = head;
+    
+    i = 0;
+    while (temp != NULL){
+        if (temp->item.harga <= hargamax){
+            harga[i] = 1;
+        }
+        i++;
+        temp = temp->next;
+    }
+}
+
+void showMenu(struct nodeitem* head, int jumlah, int pilihan2, int pilihan3, int pilihan4, int pilihan5, int hargamax){
+    int i;
+    int halal[jumlah];
+    int harga[jumlah];
+
+    
+    printf(GARISLURUS);
+    printf("\n\t\t\tMakanan dan Minuman\n");
+    printf(GARISLURUS);
+    printf("\n%-7s| %-30s| Harga", "Kode", "Nama");
+    printf("\n---------------------------------------------------");
+    
+    struct nodeitem* temp = head;
+    if (pilihan5 == 1)
+        sort(temp, jumlah, 1);
+    else if (pilihan5 == 2)
+        sort(temp, jumlah, 2);
+    
+    if (pilihan3 == 1)
+        filterHalal(temp, halal);
+    if (pilihan4 == 1)
+        filterHarga(temp, harga, hargamax);
+    
+    
+    temp = head;
+    
+    
+    switch(pilihan2){
+        case 1 :
+            i = 0;
+            while (temp != NULL){
+                if (pilihan3 == 1){
+                    if (halal[i] != 1){
+                        printf("item %d HARAM", i);
+                        i++;
+                        temp = temp->next;
+                    }
+                }
+                
+                if (pilihan4 == 1){
+                    if (harga[i] != 1){
+                        i++;
+                        temp = temp->next;
+                    }
+                }
+                printf("\n%-7s| %-30s| %d", temp->item.kode, temp->item.nama, temp->item.harga);
+                i++;
+                temp = temp->next;
+            }
+            break;
+        
+        case 2 :
+            i = 0;
+            while (temp != NULL){
+                if (pilihan3 == 1){
+                    if (halal[i] != 1){
+                        i++;
+                        temp = temp->next;
+                    }
+                }
+                if (pilihan4 == 1){
+                    if (harga[i] != 1){
+                        i++;
+                        
+                        temp = temp->next;
+                        
+                    }
+                }
+                if (temp->item.jenis == 0){
+                    printf("\n%-7s| %-30s| %d", temp->item.kode, temp->item.nama, temp->item.harga);
+                }
+                i++;
+                temp = temp->next;
+            }
+            break;
+        case 3 :
+            i =0;
+            while (temp != NULL){
+                if (pilihan3 == 1){
+                    if (halal[i] != 1){
+                        i++;
+                        temp = temp->next;
+                    }
+                }
+                if (pilihan4 == 1){
+                    if (harga[i] != 1){
+                        i++;
+                        temp = temp->next;
+                    }
+                }
+                if (temp->item.jenis == 1){
+                    printf("\n%-7s| %-30s| %d", temp->item.kode, temp->item.nama, temp->item.harga);
+                }
+                i++;
+                temp = temp->next;
+            }
+            break;
+        default :
+            printf("Silahkan masukkan angka yang sesuai!\n\n>>> ");
+            scanf(" %d", &pilihan2);
+    }
+    rekapBarang(head, jumlah);
+    
+}
+
+void printRekap(struct nodeitem * head){
+    int total = 0;
+    char temps[30];
+    
+    printf("\n\n");
+    printf(GARISLURUS);
+    printf("\n\t\t\t\t\tRekap Pesanan\n");
+    printf(GARISLURUS);
+    printf("\n%-7s| %-30s| %-4s| Harga", "Kode", "Nama", "Qty");
+    printf("\n---------------------------------------------------------");
+    
+    struct nodeitem * temp = head;
+    
+    while (temp != NULL){
+        if (temp->item.rekapHarga == 0){
+            temp = temp->next;
+        } else {
+            printf("\n%-7s| %-30s| %-4d| %d", temp->item.kode, temp->item.nama, temp->item.count, temp->item.rekapHarga);
+            printf(" ");
+            total += temp->item.rekapHarga;
+            temp = temp->next;
+        }
+    }
+
+    printf("\n\nTotal: %d", total);
+    printf("\nSilakan bayar ke kasir");
+    printf("\nTerima kasih telah menggunakan layanan kami!\n\n");
+    printf("\n\nPress any key to continue . . . ");
+    scanf("%s", temps);
+    
+}
+
+void rekapBarang(struct nodeitem* head, int jumlah){
+    int qty;
+    int valid;
+    char beli[30];
+    
+    printf("\n\nIngin membeli barang apa saja?");
+    printf("\n(Beli dengan KODE dan JUMLAH barang! Ketik \"DONE -1\" untuk selesai rekap)");
+    printf("\nContoh Beli : MGR 2\n\n");
+    
+    struct nodeitem * temp = head;
+    while (temp != NULL){
+        temp->item.count = 0;
+        temp = temp->next;
+    }
+    
+    do {
+        valid = 0;
+        printf("\nMasukkan pilihan: ");
+        scanf("%s %d", beli, &qty);
+        
+        temp = head;
+        while (temp != NULL) {
+            if (strcasestr(beli, temp->item.kode)){
+                temp->item.count += qty;
+                valid = 1;
+            }
+            temp = temp->next;
+        }
+        
+        if (valid != 1)
+            printf("Bukan merupakan kode menu yang valid!\n");
+    } while (qty != -1);
+
+    temp = head;
+    while (temp != NULL){
+        temp->item.rekapHarga = temp->item.harga * temp->item.count;
+        temp = temp->next;
+    }
+    printRekap(head);
+}
+
+int main(){
+    int jumlah = 0;
+    int hargamax = 0;
+    int pilihan1, pilihan2, pilihan3, pilihan4, pilihan5;
+    
+  
+    struct nodeitem * head = NULL;
+
+    countItems(&jumlah);
+    printf("%d\n", jumlah);
+    transferdata(&head, jumlah);
+
+    struct nodeitem * temp = NULL;
+    temp = head;
+  
+  do {
+    printf(GARISLURUS);
+    printf("\n\t\t\tSELAMAT DATANG DI TOKO ABECE!\n");
+    printf(GARISLURUS);
+    printf("\nSilahkan memilih pengaturan yang diinginkan : ");
+    printf("\n\n  1) Daftar Menu");
+    printf("\n  2) Cari Item");
+    printf("\n  3) Keluar");
+    printf("\n\n>>> ");
+    scanf("%d", &pilihan1);
+    printf(GARISLURUS);
+            
+    if (pilihan1 == 1){
+      printf("\nPilih filter yang diinginkan: ");
+      printf("\n\n  1) Makanan dan Minuman");
+      printf("\n  2) Makanan saja");
+      printf("\n  3) Minuman saja");
+      printf("\n  4) Kembali ke menu sebelumnya");
+      printf("\n\n>>> ");
+      scanf(" %d", &pilihan2);
+                
+      if (pilihan2 == 4){
+        continue;;
+      }
+                
+      printf(GARISLURUS);
+      printf("\nTampilkan item halal saja? ");
+      printf("\n\n  1) Ya");
+      printf("\n  2) Tidak");
+      printf("\n\n>>> ");
+      scanf("%d", &pilihan3);
+                
+      printf(GARISLURUS);
+      printf("\nApakah ada batas nominal harga?");
+      printf("\n\n  1) Ya");
+      printf("\n  2) Tidak");
+      printf("\n\n>>> ");
+      scanf("%d", &pilihan4);
+      if (pilihan4 == 1){
+        printf("\nBerapa?");
+        printf("\n\n>>> ");
+        scanf("%d", &hargamax);
+      }
+                
+      printf(GARISLURUS);
+      printf("\nPilih jenis sort yang diinginkan");
+      printf("\n\n  Berdasarkan harga: ");
+      printf("\n  1) Ascending");
+      printf("\n  2) Descending");
+      printf("\n\n  3)Tidak disort: ");
+      printf("\n\n>>> ");
+      scanf("%d", &pilihan5);
+            
+        showMenu(head, jumlah, pilihan2, pilihan3, pilihan4, pilihan5, hargamax);
+                
+      } else if(pilihan1 == 2){
+        search(jumlah, head);
+      } else if (pilihan1 == 3){
+          printf("\n\t\tTerima Kasih Telah Berbelanja di Toko Kami!\n");
+          printf(GARISLURUS);
+          return 0;
+      } else
+        printf("\nItu bukanlah suatu pilihan yang valid!\n\n");
+    } while (pilihan1 != 3);
+
+}
+
