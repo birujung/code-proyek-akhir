@@ -1,0 +1,142 @@
+#include <stdio.h>
+#include <stdlib.h>
+#define GARISLURUS "-----------------------------------"
+
+typedef struct bNode {
+  char data[100];
+  int price;
+  struct bNode *left;
+  struct bNode *right;
+} bNode;
+
+void insert(bNode **tree, char *data) {
+  bNode *temp, *previous, *current;
+
+  if (*tree == NULL) {
+    temp = (bNode *)malloc(sizeof(bNode));
+    strcpy(temp->data, data);
+    temp->left = NULL;
+    temp->right = NULL;
+    *tree = temp;
+    return;
+  }
+
+  if (data < (*tree)->data) {
+    insert(&(*tree)->left, data);
+  }else if (data > (*tree)->data) {
+    insert(&(*tree)->right, data);
+  }
+}
+
+void insertPrice(bNode **tree, int *price) {
+  bNode *temp, *previous, *current;
+
+  if (*tree == NULL) {
+    temp = (bNode *)malloc(sizeof(bNode));
+    temp->price = price;
+    temp->left = temp->right = NULL;
+    *tree = temp;
+    return;
+  }
+
+  if (price < (*tree)->price) {
+    insertPrice(&(*tree)->left, price);
+  } else if (price > (*tree)->price) {
+    insertPrice(&(*tree)->right, price);
+  }
+}
+
+void delete (bNode *root) {
+  if (root != NULL) {
+    delete (root->left);
+    delete (root->right);
+    free(root);
+  }
+}
+
+bNode *search(bNode **tree, char *data) {
+  if (*tree == NULL) {
+    return NULL;
+  }
+
+  if (strcmp(data, (*tree)->data) < 0) {
+    search(&((*tree)->left), data);
+  } else if (strcmp(data, (*tree)->data) > 0) {
+    search(&((*tree)->right), data);
+  } else if (strcmp(data, (*tree)->data) == 0) {
+    return *tree;
+  }
+}
+
+void recap(bNode *root, int * total) {
+  if (root != NULL) {
+    printf("%s\n", root->data);
+    *total += root->price;
+    recap(root->left, total);
+    recap(root->right, total);
+  }
+}
+
+int main() {
+  int choice, moneyspend;
+  int total = 0;
+  char name[100];
+
+  bNode *root = NULL;
+
+  
+  printf(GARISLURUS);
+  printf("\n:: Binary Tree using Linked List ::\n");
+
+  
+  while (1) {
+
+printf(GARISLURUS);    printf("\n\n===========================================================\n");
+    printf("Database Kostumer dalam Satu Hari untuk Internal Perusahaan");
+    printf("\n===========================================================\n");
+    printf("1. Insert Nama Kostumer\n2. Delete List Kostumer\n3. Cari Nama "
+           "Kostumer\n4. Rekapitulasi Nama Kostumer dan Total Penjualan\n5. "
+           "Exit\n");
+    printf("\nMasukkan Pilihan: ");
+    scanf("%d", &choice);
+    switch (choice) {
+    case 1:
+      printf(GARISLURUS);
+      printf("\nMasukkan Nama\n>> ");
+      scanf(" %100[^\n]s", &name);
+      printf("Masukkan Harga Pembelian\n>> ");
+      scanf("%d", &moneyspend);
+      insert(&root, name);
+      insertPrice(&root, moneyspend);
+      break;
+    case 2:
+      delete (root);
+      break;
+    case 3:
+      printf("Masukkan nama untuk dicari:\n>> ");
+      scanf(" %100[^\n]s", &name);
+      bNode *node = search(&root, name);
+      if (node != NULL) {
+        // printf("\nSearched node found => %s\n", node->data);
+        printf("Nama tersebut termasuk dalam list kostumer!\n");
+      } else {
+        printf("\nData tidak ditemukan!\n");
+      }
+      break;
+    case 4:
+      printf("Pembeli:\n");
+      recap(root, &total);
+      printf("\nTotal Harga Penjualan:\n>> %d\n", total);
+      break;
+    case 5:
+      printf(GARISLURUS);
+      printf("\n~~~ Terimakasih telah mampir! ~~~\n");
+      printf(GARISLURUS);
+      exit(0);
+    default:
+      printf("\n===================================\n");
+      printf("  Mohon Pilih Menu yang Tersedia!   ");
+      printf("\n===================================\n");
+    }
+  }
+}
